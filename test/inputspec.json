@@ -1,0 +1,48 @@
+[
+  {
+    "data": {
+      "value": "site1_data.csv"
+    },
+    "x_headers": {
+      "value": ["Left-Hippocampus","Left-Lateral-Ventricle"]
+    },
+    "y_headers": {
+      "value": ["EstimatedTotalIntraCranialVol"]
+    },
+    "predictions": {
+      "value": [
+        [[2500,3500]],
+        [[2750,5000]],
+        [[3000,7500]],
+        [[3250,9000]],       
+        [[3500,11000]],
+        [[4000,13000]],
+        [[4500,15000]],
+        [[5000,17000]]
+      ]
+    }
+  },
+  {
+    "data": {
+      "value": "site2_data.csv"
+    },
+    "x_headers": {
+      "value": ["Left-Hippocampus","Left-Lateral-Ventricle"]
+    },
+    "y_headers": {
+      "value": ["EstimatedTotalIntraCranialVol"]
+    },
+    "predictions": {
+      "value": [
+        [[2500,3500]],
+        [[2750,5000]],
+        [[3000,7500]],
+        [[3250,9000]],       
+        [[3500,11000]],
+        [[4000,13000]],
+        [[4500,15000]],
+        [[5000,17000]]
+      ]
+    }
+  }
+]

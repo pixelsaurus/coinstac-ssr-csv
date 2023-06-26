@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "name": "COINSTAC Linear Regression",
+    "id": "coinstac-linear-regression",
+    "version": "v1.0.0",
+    "repository": "https:\/\/github.com\/trendscenter\/coinstac-linear-regression",
+    "description": "An Example of a Linear Regression in COINSTAC",
+    "compspecVersion": 2
+  },
+  "computation": {
+    "type": "docker",
+    "dockerImage": "coinstac-linear-regression",
+    "command": [
+      "python",
+      "\/computation\/scripts\/entry.py"
+    ],
+    "remote": {
+      "type": "docker",
+      "dockerImage": "coinstac-linear-regression",
+      "command": [
+        "python",
+        "\/computation\/scripts\/entry.py"
+      ]
+    },
+    "input": {
+      "data": {
+        "order": 1,
+        "label": "Local Data",
+        "type": "files",
+        "items": ["CSV File"],
+        "extensions": [["csv"]],
+        "source": "member"
+      },
+      "x_headers": {
+        "order": 2,
+        "label": "X Headers",
+        "type": "object",
+        "source": "owner"
+      },
+      "y_headers": {
+        "order": 3,
+        "label": "Y Headers",
+        "type": "object",
+        "source": "owner"
+      },
+      "predictions": {
+        "order": 4,
+        "label": "Predictions",
+        "type": "object",
+        "source": "owner"
+      }
+    },
+    "output": {
+      "Result": {
+        "label": "Predictions",
+        "type": "number"
+      }
+    },
+    "display": {
+      "type": "string"
+    }
+  }
+}
