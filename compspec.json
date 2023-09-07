@@ -1,63 +1,159 @@
 {
   "meta": {
-    "name": "COINSTAC Linear Regression",
-    "id": "coinstac-linear-regression",
-    "version": "v1.0.0",
-    "repository": "https:\/\/github.com\/trendscenter\/coinstac-linear-regression",
-    "description": "An Example of a Linear Regression in COINSTAC",
-    "compspecVersion": 2
+      "name": "Multishot Regression",
+      "id": "coinstac-multishot-regression",
+      "version": "v1.0.0",
+      "compspecVersion": 2,
+      "repository": "https://github.com/trendscenter/coinstac-multishot-regression",
+      "description": "A Multishot Regression in COINSTAC using CSV based data"
   },
   "computation": {
-    "type": "docker",
-    "dockerImage": "coinstac-linear-regression",
-    "command": [
-      "python",
-      "\/computation\/scripts\/entry.py"
-    ],
-    "remote": {
+      "display": [
+          {
+              "type": "table",
+              "tables": [
+                  {
+                      "source": "regressions",
+                      "subtables": [
+                          {
+                              "source": "global_stats",
+                              "subtitle": "ROI"
+                          },
+                          {
+                              "source": "local_stats",
+                              "subtitle": "ROI",
+                              "subtables": "by-key"
+                          }
+                      ]
+                  }
+              ]
+          }
+      ],
+      "input": {
+          "data": {
+              "order": 1,
+              "label": "Local Data",
+              "type": "files",
+              "items": [
+                  "Data CSV File"
+              ],
+              "extensions": [
+                  [
+                      "csv"
+                  ]
+              ],
+              "source": "member"
+          },
+          "covariates": {
+              "order": 1,
+              "label": "Local Covariates",
+              "type": "files",
+              "items": [
+                  "Covariate CSV File"
+              ],
+              "extensions": [
+                  [
+                      "csv"
+                  ]
+              ],
+              "source": "member"
+          },
+          "x_headers": {
+              "order": 2,
+              "label": "X Headers",
+              "type": "object",
+              "source": "owner"
+          },
+          "y_headers": {
+              "order": 3,
+              "label": "Y Headers",
+              "type": "object",
+              "source": "owner"
+          },
+          "lambda": {
+              "label": "Lambda",
+              "type": "number",
+              "default": 0,
+              "source": "owner"
+          }
+      },
+      "output": {
+          "regressions": {
+              "label": "Regressions",
+              "type": "array",
+              "items": {
+                  "global_stats": {
+                      "label": "Global Stats",
+                      "type": "object",
+                      "items": {
+                          "avg_beta_vector": {
+                              "label": "Avg Beta Vector",
+                              "type": "array"
+                          },
+                          "r2_global": {
+                              "label": "R2 Global",
+                              "type": "number"
+                          },
+                          "ts_global": {
+                              "label": "TS Global",
+                              "type": "array"
+                          },
+                          "ps_global": {
+                              "label": "PS Global",
+                              "type": "number"
+                          },
+                          "dof_global": {
+                              "label": "DOF Global",
+                              "type": "array"
+                          }
+                      }
+                  },
+                  "local_stats": {
+                      "label": "Local Stats",
+                      "type": "object",
+                      "items": {
+                          "beta": {
+                              "label": "Beta",
+                              "type": "array"
+                          },
+                          "pval": {
+                              "label": "PVal",
+                              "type": "array"
+                          },
+                          "rsquared": {
+                              "label": "R Squared",
+                              "type": "number"
+                          },
+                          "sse": {
+                              "label": "SSE",
+                              "type": "number"
+                          },
+                          "tval": {
+                              "label": "TVal",
+                              "type": "array"
+                          }
+                      }
+                  },
+                  "ROI": {
+                      "label": "Region of Interest",
+                      "type": "string"
+                  }
+              }
+          }
+      },
       "type": "docker",
-      "dockerImage": "coinstac-linear-regression",
+      "dockerImage": "coinstac-msr-csv",
       "command": [
-        "python",
-        "\/computation\/scripts\/entry.py"
-      ]
-    },
-    "input": {
-      "data": {
-        "order": 1,
-        "label": "Local Data",
-        "type": "files",
-        "items": ["CSV File"],
-        "extensions": [["csv"]],
-        "source": "member"
-      },
-      "x_headers": {
-        "order": 2,
-        "label": "X Headers",
-        "type": "object",
-        "source": "owner"
-      },
-      "y_headers": {
-        "order": 3,
-        "label": "Y Headers",
-        "type": "object",
-        "source": "owner"
-      },
-      "predictions": {
-        "order": 4,
-        "label": "Predictions",
-        "type": "object",
-        "source": "owner"
+          "python",
+          "/computation/scripts/entry.py"
+      ],
+      "remote": {
+          "type": "docker",
+          "dockerImage": "coinstac-msr-csv",
+          "command": [
+              "python",
+              "/computation/scripts/entry.py"
+          ]
       }
-    },
-    "output": {
-      "Result": {
-        "label": "Predictions",
-        "type": "number"
-      }
-    },
-    "display": {
-      "type": "string"
-    }
   }
 }

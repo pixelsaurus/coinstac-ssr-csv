@@ -1,48 +1,36 @@
 [
   {
     "data": {
-      "value": "site1_data.csv"
+      "value": ["site1_Data.csv"]
     },
-    "x_headers": {
-      "value": ["Left-Hippocampus","Left-Lateral-Ventricle"]
+    "covariates": {
+      "value": ["site1_Covariate.csv"]
     },
     "y_headers": {
-      "value": ["EstimatedTotalIntraCranialVol"]
+      "value": ["Left-Lateral-Ventricle","Right-Lateral-Ventricle","Left-Thalamus-Proper","Right-Thalamus-Proper","Left-Caudate","Right-Caudate","Left-Putamen","Right-Putamen","Left-Pallidum","Right-Pallidum","Left-Hippocampus","Right-Hippocampus","Left-Amygdala","Right-Amygdala","Left-Accumbens-area","Right-Accumbens-area","EstimatedTotalIntraCranialVol"]
     },
-    "predictions": {
-      "value": [
-        [[2500,3500]],
-        [[2750,5000]],
-        [[3000,7500]],
-        [[3250,9000]],       
-        [[3500,11000]],
-        [[4000,13000]],
-        [[4500,15000]],
-        [[5000,17000]]
-      ]
+    "x_headers": {
+      "value": ["isControl", "age"]
+    },
+    "lambda": {
+      "value": 1
     }
   },
   {
     "data": {
-      "value": "site2_data.csv"
+      "value": ["site2_Data.csv"]
     },
-    "x_headers": {
-      "value": ["Left-Hippocampus","Left-Lateral-Ventricle"]
+    "covariates": {
+      "value": ["site2_Covariate.csv"]
     },
     "y_headers": {
-      "value": ["EstimatedTotalIntraCranialVol"]
+      "value": ["Left-Lateral-Ventricle","Right-Lateral-Ventricle","Left-Thalamus-Proper","Right-Thalamus-Proper","Left-Caudate","Right-Caudate","Left-Putamen","Right-Putamen","Left-Pallidum","Right-Pallidum","Left-Hippocampus","Right-Hippocampus","Left-Amygdala","Right-Amygdala","Left-Accumbens-area","Right-Accumbens-area","EstimatedTotalIntraCranialVol"]
     },
-    "predictions": {
-      "value": [
-        [[2500,3500]],
-        [[2750,5000]],
-        [[3000,7500]],
-        [[3250,9000]],       
-        [[3500,11000]],
-        [[4000,13000]],
-        [[4500,15000]],
-        [[5000,17000]]
-      ]
+    "x_headers": {
+      "value": ["isControl", "age"]
+    },
+    "lambda": {
+      "value": 1
     }
   }
 ]

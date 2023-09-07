@@ -1,65 +1,386 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-import sys
+"""
+This script includes the remote computations for single-shot ridge
+regression with decentralized statistic calculation
+"""
 import json
-import pandas as pd
-from sklearn import linear_model
+import sys
+import scipy as sp
+import numpy as np
 
+from itertools import repeat
+
+from scripts.regression import t_to_p
 from scripts.utils import list_recursive, log
-
-def remote_0(args):   
-    log(args['input'], args['state'])
-
-    dfX = pd.DataFrame()
-    dfY = pd.DataFrame()
-
-    predictions = []
-
-    for site, input in args['input'].items():
-        siteDFX = pd.read_json(input['local_X'])
-        siteDFY = pd.read_json(input['local_Y'])
-
-        predictions = input['predictions']
-
-        if dfX.empty:
-            dfX = siteDFX
-        else: 
-            dfX = pd.concat([ dfX, siteDFX ])
+from scripts.remote_ancillary import get_stats_to_dict
 
 
-        if dfY.empty:
-            dfY = siteDFY
-        else: 
-            dfY = pd.concat([ dfY, siteDFY ])
+def remote_0(args):
+    #log(args, args['state'])
 
-    regr = linear_model.LinearRegression()
+    input_list = args["input"]
 
-    regr.fit(dfX,dfY)
-
-    predict = []
-
-    for p in predictions:
-        predict.append(str(regr.predict(p)))
-
+    site_ids = list(input_list.keys())
+    userID = list(input_list)[0]
     
+    site_covar_list = [
+        '{}_{}'.format('site', label) for index, label in enumerate(site_ids)
+        if index
+    ]
 
-    output = {
-        'output': { 
-            "predictions": str(predict),
-            "computation_phase": "remote_0",
-        },
-       "success": True
+    X_labels = input_list[userID]["x_headers"]
+    y_labels = input_list[userID]["y_headers"]
+
+    output_dict = {
+        "site_covar_list": site_covar_list,
+        "computation_phase": "remote_0"
     }
 
-    log(output, args['state'])
+    cache_dict = {
+        "X_labels": X_labels,
+        "y_labels": y_labels
+    }
 
-    return output
+    computation_output_dict = {
+        "output": output_dict,
+        "cache": cache_dict,
+    }
+
+    #log(args, args['state'])
+
+    return computation_output_dict
+
+
+def remote_1(args):
+    #log(args, args['state'])
+    """Need this function for performing multi-shot regression"""
+    input_list = args["input"]
+    first_user_id = list(input_list.keys())[0]
+    beta_vec_size = input_list[first_user_id]["beta_vec_size"]
+    number_of_regressions = input_list[first_user_id]["number_of_regressions"]
+
+    # Initial setup
+    beta1 = 0.9
+    beta2 = 0.999
+    eps = 1e-8
+    tol = 100  # 0.01
+    eta = 1000  # 0.05
+    count = 0
+
+    wp, wc, mt, vt = [
+        np.zeros((number_of_regressions, beta_vec_size), dtype=float)
+        for _ in range(4)
+    ]
+
+    iter_flag = 1
+
+    output_dict = {
+        "remote_beta": wp.tolist(),
+        "iter_flag": iter_flag,
+        "computation_phase": "remote_1"
+    }
+
+    cache_dict = {
+        "beta1": beta1,
+        "beta2": beta2,
+        "eps": eps,
+        "tol": tol,
+        "eta": eta,
+        "count": count,
+        "wp": wp.tolist(),
+        "wc": wc.tolist(),
+        "mt": mt.tolist(),
+        "vt": vt.tolist(),
+        "iter_flag": iter_flag,
+        "number_of_regressions": number_of_regressions
+    }
+
+    computation_output = {
+        "output": output_dict,
+        "cache": cache_dict,
+    }
+
+    #log(computation_output, args['state'])
+
+    return computation_output
+
+
+def remote_2(args):
+    #log(args, args['state'])
+
+    beta1 = args["cache"]["beta1"]
+    beta2 = args["cache"]["beta2"]
+    eps = args["cache"]["eps"]
+    tol = args["cache"]["tol"]
+    eta = args["cache"]["eta"]
+    count = args["cache"]["count"]
+    wp = np.array(args["cache"]["wp"], dtype=float)
+    wc = np.array(args["cache"]["wc"], dtype=float)
+    mt = args["cache"]["mt"]
+    vt = args["cache"]["vt"]
+    iter_flag = args["cache"]["iter_flag"]
+    number_of_regressions = args["cache"]["number_of_regressions"]
+
+    count = count + 1
+
+    if not iter_flag:
+        cache_dict = {"avg_beta_vector": wc.tolist()}
+
+        output_dict = {
+            "avg_beta_vector": wc.tolist(),
+            "computation_phase": "remote_2b"
+        }
+
+        computation_output = {
+            "output": output_dict,
+            "cache": cache_dict,
+        }
+    else:
+        input_list = args["input"]
+        if len(input_list) == 1:
+            grad_remote = [
+                np.array(args["input"][site]["local_grad"])
+                for site in input_list
+            ]
+            grad_remote = grad_remote[0]
+        else:
+            grad_remote = sum([
+                np.array(args["input"][site]["local_grad"])
+                for site in input_list
+            ])
+
+        mt = beta1 * np.array(mt) + (1 - beta1) * grad_remote
+        vt = beta2 * np.array(vt) + (1 - beta2) * (grad_remote**2)
+
+        m = mt / (1 - beta1**count)
+        v = vt / (1 - beta2**count)
+
+        m = m.astype(float)
+        v = v.astype(float)
+
+        wc = wp - eta * m / (np.sqrt(v) + eps)
+
+        mask_flag = np.linalg.norm(wc - wp, axis=1) <= tol
+
+        #if sum(mask_flag) == number_of_regressions:
+        if args['state']['iteration'] == number_of_regressions: 
+            iter_flag = 0
+
+        for i in range(mask_flag.shape[0]):
+            if not mask_flag[i]:
+                wp[i] = wc[i]
+
+        output_dict = {
+            "remote_beta": wc.tolist(),
+            "mask_flag": mask_flag.astype(int).tolist(),
+            "computation_phase": "remote_2a"
+        }
+
+        cache_dict = {
+            "count": count,
+            "wp": wp.tolist(),
+            "wc": wc.tolist(),
+            "mt": mt.tolist(),
+            "vt": vt.tolist(),
+            "iter_flag": iter_flag
+        }
+
+        computation_output = {
+            "output": output_dict,
+            "cache": cache_dict,
+        }
+
+        #log(computation_output, args['state'])
+
+    return computation_output
+
+
+def remote_3(args):
+    #log(args, args['state'])
+    """Computes the global beta vector, mean_y_global & dof_global
+
+    Args:
+        args (dictionary): {"input": {
+                                "beta_vector_local": list/array,
+                                "mean_y_local": list/array,
+                                "count_local": int,
+                                "computation_phase": string
+                                },
+                            "cache": {}
+                            }
+
+    Returns:
+        computation_output (json) : {"output": {
+                                        "avg_beta_vector": list,
+                                        "mean_y_global": ,
+                                        "computation_phase":
+                                        },
+                                    "cache": {
+                                        "avg_beta_vector": ,
+                                        "mean_y_global": ,
+                                        "dof_global":
+                                        },
+                                    }
+
+    """
+    input_list = args["input"]
+    userID = list(input_list)[0]
+    first_user_id = list(input_list)[0]
+
+    avg_beta_vector = np.array(args["cache"]["avg_beta_vector"])
+
+    all_local_stats_dicts = [
+        input_list[site]["local_stats_list"] for site in input_list
+    ]
+
+    mean_y_local = [input_list[site]["mean_y_local"] for site in input_list]
+    count_y_local = [np.array(input_list[site]["count_local"]) for site in input_list]
+    mean_y_global = np.array(mean_y_local) * np.array(count_y_local)
+    mean_y_global = np.sum(mean_y_global, axis=0) / np.sum(count_y_local, axis=0)
+
+    dof_global = sum(count_y_local) - avg_beta_vector.shape[1]
+
+    output_dict = {
+        "avg_beta_vector": avg_beta_vector.tolist(),
+        "mean_y_global": mean_y_global.tolist(),
+        "computation_phase": "remote_3"
+    }
+
+    cache_dict = {
+        "avg_beta_vector": avg_beta_vector.tolist(),
+        "mean_y_global": mean_y_global.tolist(),
+        "dof_global": dof_global.tolist(),
+        "all_local_stats_dicts": all_local_stats_dicts
+    }
+
+    computation_output = {
+        "output": output_dict,
+        "cache": cache_dict,
+    }
+
+    #log(computation_output, args['state'])
+
+    return computation_output
+
+
+def remote_4(args):
+    #log(args, args['state'])
+    """
+    Computes the global model fit statistics, r_2_global, ts_global, ps_global
+
+    Args:
+        args (dictionary): {"input": {
+                                "SSE_local": ,
+                                "SST_local": ,
+                                "varX_matrix_local": ,
+                                "computation_phase":
+                                },
+                            "cache":{},
+                            }
+
+    Returns:
+        computation_output (json) : {"output": {
+                                        "avg_beta_vector": ,
+                                        "beta_vector_local": ,
+                                        "r_2_global": ,
+                                        "ts_global": ,
+                                        "ps_global": ,
+                                        "dof_global":
+                                        },
+                                    "success":
+                                    }
+    Comments:
+        Generate the local fit statistics
+            r^2 : goodness of fit/coefficient of determination
+                    Given as 1 - (SSE/SST)
+                    where   SSE = Sum Squared of Errors
+                            SST = Total Sum of Squares
+            t   : t-statistic is the coefficient divided by its standard error.
+                    Given as beta/std.err(beta)
+            p   : two-tailed p-value (The p-value is the probability of
+                  seeing a result as extreme as the one you are
+                  getting (a t value as large as yours)
+                  in a collection of random data in which
+                  the variable had no effect.)
+
+    """
+    input_list = args["input"]
+
+    X_labels = args["cache"]["X_labels"]
+    y_labels = args["cache"]["y_labels"]
+    all_local_stats_dicts = args["cache"]["all_local_stats_dicts"]
+
+    cache_list = args["cache"]
+    avg_beta_vector = cache_list["avg_beta_vector"]
+    dof_global = cache_list["dof_global"]
+
+    SSE_global = sum(
+        [np.array(input_list[site]["SSE_local"]) for site in input_list])
+    SST_global = sum(
+        [np.array(input_list[site]["SST_local"]) for site in input_list])
+    varX_matrix_global = sum([
+        np.array(input_list[site]["varX_matrix_local"]) for site in input_list
+    ])
+
+    r_squared_global = 1 - (SSE_global / SST_global)
+    MSE = SSE_global / np.array(dof_global)
+
+    ts_global = []
+    ps_global = []
+
+    for i in range(len(MSE)):
+        var_covar_beta_global = MSE[i] * sp.linalg.inv(varX_matrix_global)
+        se_beta_global = np.sqrt(var_covar_beta_global.diagonal())
+        ts = (avg_beta_vector[i] / se_beta_global).tolist()
+        ps = t_to_p(ts, dof_global[i])
+        ts_global.append(ts)
+        ps_global.append(ps)
+
+    # Block of code to print local stats as well
+    sites = [site for site in input_list]
+
+    all_local_stats_dicts = list(map(list, zip(*all_local_stats_dicts)))
+
+    a_dict = [{key: value
+               for key, value in zip(sites, stats_dict)}
+              for stats_dict in all_local_stats_dicts]
+
+    # Block of code to print just global stats
+    keys1 = [
+        "Coefficient", "R Squared", "t Stat", "P-value", "Degrees of Freedom",
+        "covariate_labels"
+    ]
+    global_dict_list = get_stats_to_dict(keys1, avg_beta_vector,
+                                         r_squared_global, ts_global[0],
+                                         ps_global, dof_global,
+                                         repeat(X_labels, len(y_labels)))
+
+    # Print Everything
+    keys2 = ["ROI", "global_stats", "local_stats"]
+    dict_list = get_stats_to_dict(keys2, y_labels, global_dict_list, a_dict)
+
+    output_dict = {"regressions": dict_list}
+
+    computation_output = {"output": output_dict, "success": True}
+
+    log(computation_output, args['state'])
+
+    return computation_output
+
 
 def start(PARAM_DICT):
     PHASE_KEY = list(list_recursive(PARAM_DICT, "computation_phase"))
 
     if "local_0" in PHASE_KEY:
         return remote_0(PARAM_DICT)
+    elif "local_1" in PHASE_KEY:
+        return remote_1(PARAM_DICT)
+    elif "local_2" in PHASE_KEY:
+        return remote_2(PARAM_DICT)
+    elif "local_3" in PHASE_KEY:
+        return remote_3(PARAM_DICT)
+    elif "local_4" in PHASE_KEY:
+        return remote_4(PARAM_DICT)
     else:
         raise ValueError("Error occurred at Remote")
