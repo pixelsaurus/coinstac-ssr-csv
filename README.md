@@ -1,3 +1,3 @@
-# COINSTAC Linear Regression Example
+# COINSTAC Multishot Regression using CSV based data
 
-This is a very simple example of a linear regression on tabular CSV data computation for COINSTAC
+See: https://github.com/trendscenter/coinstac-msr-fsl
