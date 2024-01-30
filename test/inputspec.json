@@ -7,10 +7,10 @@
       "value": ["site1_Covariate.csv"]
     },
     "y_headers": {
-      "value": ["Left-Lateral-Ventricle","Right-Lateral-Ventricle","Left-Thalamus-Proper","Right-Thalamus-Proper","Left-Caudate","Right-Caudate","Left-Putamen","Right-Putamen","Left-Pallidum","Right-Pallidum","Left-Hippocampus","Right-Hippocampus","Left-Amygdala","Right-Amygdala","Left-Accumbens-area","Right-Accumbens-area","EstimatedTotalIntraCranialVol"]
+      "value": ["L_hippo","R_hippo","Tot_hippo"]
     },
-    "x_headers": {
-      "value": ["isControl", "age"]
+    "X_headers": {
+      "value": ["MDD","Age","Sex","ICV"]
     },
     "lambda": {
       "value": 1
@@ -24,10 +24,44 @@
       "value": ["site2_Covariate.csv"]
     },
     "y_headers": {
-      "value": ["Left-Lateral-Ventricle","Right-Lateral-Ventricle","Left-Thalamus-Proper","Right-Thalamus-Proper","Left-Caudate","Right-Caudate","Left-Putamen","Right-Putamen","Left-Pallidum","Right-Pallidum","Left-Hippocampus","Right-Hippocampus","Left-Amygdala","Right-Amygdala","Left-Accumbens-area","Right-Accumbens-area","EstimatedTotalIntraCranialVol"]
+      "value": ["L_hippo","R_hippo","Tot_hippo"]
     },
-    "x_headers": {
-      "value": ["isControl", "age"]
+    "X_headers": {
+      "value": ["MDD","Age","Sex","ICV"]
+    },
+    "lambda": {
+      "value": 1
+    }
+  },
+  {
+    "data": {
+      "value": ["site3_Data.csv"]
+    },
+    "covariates": {
+      "value": ["site3_Covariate.csv"]
+    },
+    "y_headers": {
+      "value": ["L_hippo","R_hippo","Tot_hippo"]
+    },
+    "X_headers": {
+      "value": ["MDD","Age","Sex","ICV"]
+    },
+    "lambda": {
+      "value": 1
+    }
+  },
+  {
+    "data": {
+      "value": ["site4_Data.csv"]
+    },
+    "covariates": {
+      "value": ["site4_Covariate.csv"]
+    },
+    "y_headers": {
+      "value": ["L_hippo","R_hippo","Tot_hippo"]
+    },
+    "X_headers": {
+      "value": ["MDD","Age","Sex","ICV"]
     },
     "lambda": {
       "value": 1

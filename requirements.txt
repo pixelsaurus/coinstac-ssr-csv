@@ -1,3 +1,8 @@
-coinstac==0.3.4b0
-pandas==1.5.3
+coinstac
+matplotlib
+nilearn
+numba
+scikit-learn
 statsmodels
+ujson
+numpy
